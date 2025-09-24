@@ -3,79 +3,75 @@
 /*                                                        :::      ::::::::   */
 /*   philo_routine.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fahosni <fahosni@student.42.fr>            +#+  +:+       +#+        */
+/*   By: narah <narah@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/13 16:20:28 by fahosni           #+#    #+#             */
-/*   Updated: 2025/09/19 14:56:49 by fahosni          ###   ########.fr       */
+/*   Updated: 2025/09/24 17:23:31 by narah            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
+#include "philo.h"
+
 void finish_eating(t_philo *philo)
 {
-    pthread_mutex_lock(&philo->rules->print_mutex);
-    if (!philo->rules->someone_died)
-        printf("%ld %d is eating\n",
-            current_time_ms() - philo->rules->start_time, philo->id);
-    pthread_mutex_unlock(&philo->rules->print_mutex);
+    t_rules *rules = philo->rules;
+
+    // Update last meal safely
+    pthread_mutex_lock(&rules->finished_mutex);
     philo->last_meal = current_time_ms();
-    long start = current_time_ms();
-    while (!philo->rules->someone_died
-           && current_time_ms() - start < philo->rules->time_to_eat)
-        usleep(100);
+    philo->meals_eaten++;
+    if (rules->must_eat_count > 0
+        && philo->meals_eaten == rules->must_eat_count)
+    {
+        rules->finished_eating++;
+    }
+    pthread_mutex_unlock(&rules->finished_mutex);
+
+    print_action(philo, "is eating");
+    smart_sleep(rules->time_to_eat, rules);
+
     pthread_mutex_unlock(philo->left_fork);
     pthread_mutex_unlock(philo->right_fork);
-    philo->meals_eaten++;
-    if (philo->rules->must_eat_count != -1
-        && philo->meals_eaten == philo->rules->must_eat_count)
-    {
-        pthread_mutex_lock(&philo->rules->finished_mutex);
-        philo->rules->finished_eating++;
-        pthread_mutex_unlock(&philo->rules->finished_mutex);
-    }
 }
 
-void philo_eat(t_philo *philo)
-{
-    if (philo->rules->someone_died)
-        return;
-    take_forks(philo);
-    if (philo->rules->nb_philo == 1 || philo->rules->someone_died)
-        return;
-    finish_eating(philo);
-}
 
-void philo_sleep_think(t_philo *philo)
-{
-    pthread_mutex_lock(&philo->rules->print_mutex);
-    if (!philo->rules->someone_died)
-        printf("%ld %d is sleeping\n",
-            current_time_ms() - philo->rules->start_time, philo->id);
-    pthread_mutex_unlock(&philo->rules->print_mutex);
-    long start = current_time_ms();
-    while (!philo->rules->someone_died
-           && current_time_ms() - start < philo->rules->time_to_sleep)
-        usleep(100);
-    pthread_mutex_lock(&philo->rules->print_mutex);
-    if (!philo->rules->someone_died)
-        printf("%ld %d is thinking\n",
-            current_time_ms() - philo->rules->start_time, philo->id);
-    pthread_mutex_unlock(&philo->rules->print_mutex);
-}
 
 void *philo_routine(void *arg)
 {
     t_philo *philo = (t_philo *)arg;
+    t_rules *rules = philo->rules;
 
-    if (philo->id % 2 == 1)
-        usleep(1000);
-    while (!philo->rules->someone_died)
+    if (philo->id % 2 == 0)
+        usleep(100); // offset for even philosophers
+
+    while (1)
     {
-        philo_eat(philo);
-        if (philo->rules->someone_died)
+        // Check if simulation ended
+        pthread_mutex_lock(&rules->finished_mutex);
+        int done = (rules->must_eat_count != -1
+                    && rules->finished_eating == rules->nb_philo);
+        pthread_mutex_unlock(&rules->finished_mutex);
+
+        if (rules->someone_died || done)
             break;
-        philo_sleep_think(philo);
+
+        // Take forks and eat
+        take_forks(philo);
+        if (rules->nb_philo > 1) // already handled in take_forks for 1
+            finish_eating(philo);
+
+        // Sleep
+        if (rules->someone_died)
+            break;
+        print_action(philo, "is sleeping");
+        smart_sleep(rules->time_to_sleep, rules);
+
+        // Think
+        if (rules->someone_died)
+            break;
+        print_action(philo, "is thinking");
     }
-    return (NULL);
+    return NULL;
 }

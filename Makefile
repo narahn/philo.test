@@ -13,6 +13,7 @@ SRCS = \
 	start_simulation.c \
 	cleanup.c \
 	forks.c \
+	print_action.c \
 
 OBJS = $(SRCS:.c=.o)
 

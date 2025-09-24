@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fahosni <fahosni@student.42.fr>            +#+  +:+       +#+        */
+/*   By: narah <narah@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/13 16:20:35 by fahosni           #+#    #+#             */
-/*   Updated: 2025/09/19 14:56:28 by fahosni          ###   ########.fr       */
+/*   Updated: 2025/09/24 17:20:13 by narah            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,8 @@ struct s_rules
     int finished_eating;
     pthread_mutex_t finished_mutex;
     pthread_mutex_t print_mutex;
+    pthread_mutex_t death_mutex;
+    pthread_mutex_t meal_mutex;
     pthread_mutex_t *forks;
     long start_time;
     t_philo *philos;
@@ -60,5 +62,7 @@ void					start_simulation(t_rules *rules);
 void					cleanup(t_philo *philos, pthread_mutex_t *forks,
 							t_rules *rules);
 void 					take_forks(t_philo *philo);
+void smart_sleep(int ms, t_rules *rules);
+void print_action(t_philo *philo, const char *msg);
 
 #endif

@@ -1,41 +1,31 @@
-# include "philo.h"
-
-int try_lock_fork(pthread_mutex_t *fork, t_philo *philo)
-{
-    while (!philo->rules->someone_died)
-    {
-        if (pthread_mutex_trylock(fork) == 0)
-            return 1;
-        usleep(100);
-    }
-    return 0;
-}
+#include "philo.h"
 
 void take_forks(t_philo *philo)
 {
-    if (philo->rules->someone_died)
-        return;
-    if (!try_lock_fork(philo->left_fork, philo))
-        return;
-    pthread_mutex_lock(&philo->rules->print_mutex);
-    if (!philo->rules->someone_died)
-        printf("%ld %d has taken a fork\n",
-            current_time_ms() - philo->rules->start_time, philo->id);
-    pthread_mutex_unlock(&philo->rules->print_mutex);
-    if (philo->rules->nb_philo == 1)
+    t_rules *rules = philo->rules;
+
+    if (rules->nb_philo == 1)
     {
-        usleep(philo->rules->time_to_die * 1000);
+        pthread_mutex_lock(philo->left_fork);
+        print_action(philo, "has taken a fork");
+        // Wait until death
+        smart_sleep(rules->time_to_die, rules);
         pthread_mutex_unlock(philo->left_fork);
         return;
     }
-    if (!try_lock_fork(philo->right_fork, philo))
+
+    if (philo->id % 2 == 0)
     {
-        pthread_mutex_unlock(philo->left_fork);
-        return;
+        pthread_mutex_lock(philo->right_fork);
+        print_action(philo, "has taken a fork");
+        pthread_mutex_lock(philo->left_fork);
+        print_action(philo, "has taken a fork");
     }
-    pthread_mutex_lock(&philo->rules->print_mutex);
-    if (!philo->rules->someone_died)
-        printf("%ld %d has taken a fork\n",
-            current_time_ms() - philo->rules->start_time, philo->id);
-    pthread_mutex_unlock(&philo->rules->print_mutex);
+    else
+    {
+        pthread_mutex_lock(philo->left_fork);
+        print_action(philo, "has taken a fork");
+        pthread_mutex_lock(philo->right_fork);
+        print_action(philo, "has taken a fork");
+    }
 }
