@@ -27,7 +27,9 @@ int	parse_args(int argc, char **argv, t_rules *rules)
 		rules->must_eat_count = ft_atoi(argv[5]);
 	else
 		rules->must_eat_count = -1;
+	// pthread_mutex_lock(&rules->death_mutex);
 	rules->someone_died = 0;
+	// pthread_mutex_unlock(&rules->death_mutex);
 	if (rules->nb_philo <= 0 || rules->time_to_die <= 0
 		|| rules->time_to_eat <= 0 || rules->time_to_sleep <= 0 || (argc == 6
 			&& rules->must_eat_count <= 0))
@@ -37,3 +39,5 @@ int	parse_args(int argc, char **argv, t_rules *rules)
 	}
 	return (0);
 }
+
+

@@ -12,6 +12,25 @@
 
 #include "philo.h"
 
+// long	current_time_ms(void)
+// {
+// 	struct timeval	tv;
+
+// 	gettimeofday(&tv, NULL);
+// 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+// }
+
+// void smart_sleep(int ms, t_rules *rules)
+// {
+//     long start = current_time_ms();
+//     while (current_time_ms() - start < ms)
+//     {
+//         if (rules->someone_died)
+//             break;
+//         usleep(500); // sleep in small chunks
+//     }
+// }
+
 long	current_time_ms(void)
 {
 	struct timeval	tv;
@@ -25,13 +44,13 @@ void smart_sleep(int ms, t_rules *rules)
     long start = current_time_ms();
     while (current_time_ms() - start < ms)
     {
+        // Safely check if someone died with mutex protection
         pthread_mutex_lock(&rules->death_mutex);
-        if (rules->someone_died)
-        {
-            pthread_mutex_unlock(&rules->death_mutex);
-            break;
-        }
+        int died = rules->someone_died;
         pthread_mutex_unlock(&rules->death_mutex);
+        
+        if (died)
+            break;
         usleep(500); // sleep in small chunks
     }
 }

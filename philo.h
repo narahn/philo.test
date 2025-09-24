@@ -64,5 +64,6 @@ void					cleanup(t_philo *philos, pthread_mutex_t *forks,
 void 					take_forks(t_philo *philo);
 void smart_sleep(int ms, t_rules *rules);
 void print_action(t_philo *philo, const char *msg);
+int check_if_all_eaten(t_rules *rules);
 
 #endif

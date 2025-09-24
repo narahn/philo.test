@@ -23,6 +23,9 @@ void	cleanup(t_philo *philos, pthread_mutex_t *forks, t_rules *rules)
 		i++;
 	}
 	pthread_mutex_destroy(&rules->print_mutex);
+	pthread_mutex_destroy(&rules->death_mutex);
+	pthread_mutex_destroy(&rules->finished_mutex);
+	pthread_mutex_destroy(&rules->meal_mutex);
 	free(philos);
 	free(forks);
 }

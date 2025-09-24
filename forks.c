@@ -8,7 +8,6 @@ void take_forks(t_philo *philo)
     {
         pthread_mutex_lock(philo->left_fork);
         print_action(philo, "has taken a fork");
-        // Wait until death
         smart_sleep(rules->time_to_die, rules);
         pthread_mutex_unlock(philo->left_fork);
         return;
